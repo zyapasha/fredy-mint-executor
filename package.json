@@ -1,0 +1,43 @@
+{
+  "name": "fredy-mint-executor",
+  "version": "0.1.0",
+  "description": "One-shot NFT mint across multiple EVM wallets in parallel. Auto chain detect, function probe, gas budget, broadcast, consolidate.",
+  "main": "mint.js",
+  "bin": {
+    "fredy-mint": "./mint.js"
+  },
+  "scripts": {
+    "start": "node mint.js",
+    "test": "echo \"No tests yet\" && exit 0"
+  },
+  "keywords": [
+    "nft",
+    "mint",
+    "evm",
+    "ethereum",
+    "base",
+    "arbitrum",
+    "optimism",
+    "ethers",
+    "fcfs",
+    "web3",
+    "agent",
+    "automation"
+  ],
+  "author": "zyapasha",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zyapasha/fredy-mint-executor.git"
+  },
+  "bugs": {
+    "url": "https://github.com/zyapasha/fredy-mint-executor/issues"
+  },
+  "homepage": "https://github.com/zyapasha/fredy-mint-executor#readme",
+  "dependencies": {
+    "ethers": "^6.13.0"
+  }
+}
