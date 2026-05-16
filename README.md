@@ -1,8 +1,41 @@
 # fredy-mint-executor
 
+🌐 **English** · [Bahasa Indonesia](README.id.md)
+
 > One-shot NFT mint across multiple EVM wallets in parallel. Auto chain detect, function probe, gas budget, broadcast, consolidate.
 
 Built as a component of [FREDY](https://github.com/zyapasha/fredy-mint-executor#about-fredy), an autonomous Web3 + dev-ops agent running on the [Hermes Agent](https://hermes-agent.nousresearch.com) framework. This repo extracts the mint pipeline as a standalone CLI so anyone can use it.
+
+## For beginners: what is this for?
+
+Imagine you have 5 empty wallets, each eligible for a free mint. The manual way:
+
+1. Open MetaMask, switch to wallet #1
+2. Open mint website, click "Mint", approve in MetaMask
+3. Wait for confirmation
+4. Switch to wallet #2, repeat
+5. ...repeat 5 times total
+6. ~5-10 minutes end-to-end, and on supply-capped drops you might miss the window
+
+With this tool:
+
+```bash
+node mint.js 0xCONTRACT
+```
+
+Done in ~10 seconds. Every wallet mints in parallel and the NFTs are auto-forwarded to your cold wallet.
+
+**Who is this for?**
+- NFT collectors entering FCFS (first-come-first-served) mints
+- Anyone with multiple airdrop wallets tired of manual switching
+- Users who've been burned by sold-outs mid-click
+
+**What you need before starting:**
+- Linux / macOS / WSL (Windows Subsystem for Linux)
+- Node.js 20 or newer — verify with `node --version`
+- GnuPG — verify with `gpg --version`
+- An EVM wallet (12-word mnemonic or private key) funded with enough gas
+- The contract address of the NFT you want to mint
 
 ## What it does
 
@@ -51,22 +84,26 @@ Requires Node.js 20+ and GnuPG.
 
 ## Setup the secret store
 
+The most important part — your wallets are stored encrypted, never in plain text. Step-by-step:
+
 ```bash
-# 1. Create the secret bundle (one-time)
+# 1. Create the config folder
 mkdir -p ~/.config/mint-executor
+
+# 2. Write the wallet bundle to a temporary plaintext file
+#    Format: <label>-<field>=<value>
+#    Field is one of: address, mnemonic, pk, derivation
 cat > /tmp/wallets.txt << 'EOF'
-# Format: <label>-<field>=<value>
-# Field is one of: address, mnemonic, pk, derivation
 airdrop-01-address=0xYourEvmAddress
 airdrop-01-mnemonic=word1 word2 word3 ... word12
 airdrop-01-derivation=m/44'/60'/0'/0/0
 EOF
 
-# 2. Generate a passphrase file
+# 3. Generate a random passphrase for encryption
 openssl rand -base64 32 | tr -d '\n' > ~/.config/mint-executor/.key
 chmod 400 ~/.config/mint-executor/.key
 
-# 3. Encrypt and remove plaintext
+# 4. Encrypt and shred the plaintext (important!)
 gpg --batch --yes --passphrase-file ~/.config/mint-executor/.key --pinentry-mode loopback \
     --symmetric --cipher-algo AES256 \
     --output ~/.config/mint-executor/wallets.gpg /tmp/wallets.txt
@@ -74,7 +111,9 @@ shred -u /tmp/wallets.txt
 chmod 600 ~/.config/mint-executor/wallets.gpg
 ```
 
-The script reads `wallets.gpg` decrypted in-memory only. Plaintext never touches disk after step 3.
+The script reads `wallets.gpg` decrypted in-memory only. After step 4, plaintext never touches disk again.
+
+⚠️ **Back up `~/.config/mint-executor/.key` somewhere safe (offline drive / password manager).** Without this file, `wallets.gpg` cannot be decrypted — your secrets are permanently lost.
 
 ## Usage
 
@@ -82,13 +121,13 @@ The script reads `wallets.gpg` decrypted in-memory only. Plaintext never touches
 # Full auto: detect chain, probe fn, mint with all wallets, consolidate to default destination
 node mint.js 0xCONTRACT
 
-# Preflight only, no broadcast
+# Preflight only, no broadcast (recommended for the first run!)
 node mint.js 0xCONTRACT --dry
 
 # Mint 2 per wallet
 node mint.js 0xCONTRACT --qty=2
 
-# Force a chain (skip auto-detect)
+# Force a chain (skip auto-detect, faster)
 node mint.js 0xCONTRACT --chain=base
 
 # Force a mint function name
@@ -103,6 +142,8 @@ node mint.js 0xCONTRACT --no-consolidate
 # Send minted NFTs to a custom destination
 node mint.js 0xCONTRACT --to=0xCustomColdWallet
 ```
+
+**Beginner tip:** always run with `--dry` on your first invocation against a new contract. Inspect the preflight output — if it looks sane, run again without `--dry`.
 
 ## Output example
 
